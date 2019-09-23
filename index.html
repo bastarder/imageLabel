@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<title>Document</title>
+</head>
+<style>
+	.container{
+		position: relative;
+		display: inline-block;
+		user-select: none;
+		line-height: 0;
+	}
+	img{
+		width: 600px;
+		height: 300px;
+		background: grey;
+		user-select: none;
+		margin: 0;
+		padding: 0;
+	}
+	.marker{
+		position: absolute;
+		left: 20px;
+		top: 30px;
+		width: 40px;
+		height: 60px;
+		border: 2px solid red;
+		background: rgba(0,0,0,0);
+	}
+
+	.dot{
+		width: 4px;
+		height: 4px;
+		border: 2px solid red;
+		background: white;
+		border-radius: 50%;
+		position: absolute;
+		user-select: none;
+	}
+
+	.dot-0, .dot-1, .dot-2{
+		top: -5px;
+	}
+
+	.dot-3, .dot-4 {
+		top: calc(50% - 5px);
+	}
+
+	.dot-5, .dot-6, .dot-7{
+		bottom: -5px;
+	}
+
+	.dot-0, .dot-3, .dot-5{
+		left: -5px;
+	}
+
+	.dot-1, .dot-6{
+		left: calc(50% - 5px);
+	}
+
+	.dot-2, .dot-4, .dot-7{
+		right: -5px;
+	}
+	.marker-container{
+		position: absolute;
+		user-select: none;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		background: rgba(0,0,0,0.5);
+	}
+</style>
+<body>
+	<div class="container" onselectstart="return false;">
+		<img />
+		<div class="marker-container" >
+			<div class="marker">
+				<div class="dot dot-0"></div>
+				<div class="dot dot-1"></div>
+				<div class="dot dot-2"></div>
+				<div class="dot dot-3"></div>
+				<div class="dot dot-4"></div>
+				<div class="dot dot-5"></div>
+				<div class="dot dot-6"></div>
+				<div class="dot dot-7"></div>
+			</div>
+		</div>
+	</div>
+</body>
+<script>
+
+window.onload = function(){
+	var _marker = document.querySelector('.marker');
+	var _dots = _marker.querySelectorAll('.dot');
+	var container = document.querySelector('.container');
+	
+	var marker = {
+		container: document.querySelector('.marker-container'),
+		instance: _marker,
+		dots: _dots,
+		positionOptions: null,
+		moveDot: -1,
+	}
+
+	marker.container.onmousedown = function(e){
+			var target = e.target;
+
+			if(target === marker.container){
+				return ;
+			}
+
+			var rect = marker.container.getBoundingClientRect();
+			var mark = _marker.getBoundingClientRect();
+
+			marker.positionOptions = {
+				// containerX: rect.x,
+				// containerY: rect.y,
+				type: -1,
+				start: {
+					x: e.clientX,
+					y: e.clientY,
+				},
+				containerWidth: rect.width,
+				containerHeight: rect.height,
+				//////////////////////////////
+				x: 0.1,
+				y: 0.1,
+				ex: 0.2,
+				ey: 0.2,
+				//////////////////////////////
+				_x: 0.1,
+				_y: 0.1,
+				_ex: 0.2,
+				_ey: 0.2,
+			}
+
+			if(window.cachePosition){
+				marker.positionOptions.x = cachePosition[0];
+				marker.positionOptions.ex = cachePosition[1];
+				marker.positionOptions.y = cachePosition[2];
+				marker.positionOptions.ey = cachePosition[3];
+				marker.positionOptions._x = cachePosition[0];
+				marker.positionOptions._ex = cachePosition[1];
+				marker.positionOptions._y = cachePosition[2];
+				marker.positionOptions._ey = cachePosition[3];
+			}
+
+			// console.log(marker.positionOptions)
+
+			var type = -1;
+			try {
+				type = Number(target.className.match(/dot-([0-9]+)/)[1]);
+			} catch (error) {
+				type = -1;
+			}
+			
+			marker.positionOptions.type = type;
+
+	}
+
+	marker.container.onmousemove = function(e){
+		if(!marker.positionOptions) return;
+		
+		var option = marker.positionOptions;
+		var type = option.type;
+
+		var offsetX = (e.clientX - option.start.x) / option.containerWidth;
+		var offsetY = (e.clientY - option.start.y) / option.containerHeight;
+		
+		var current = {
+			_x: option.x + offsetX,
+			_ex: option.ex + offsetX,
+			_y: option.y + offsetY,
+			_ey: option.ey + offsetY,
+		}
+
+		var actionList = [
+			['x', 'y'],
+			['y'],
+			['ex', 'y'],
+			['x'],
+			['ex'],
+			['x', 'ey'],
+			['ey'],
+			['ex', 'ey'],
+		]
+
+		var actions = actionList[type] || ['x','y', 'ex', 'ey'];
+
+		// var map = {
+		// 	'_x': '_ex',
+		// 	'_y': '_ey',
+		// 	'_ex': '_x',
+		// 	'_ey': '_y',
+		// };
+		// ['_x', '_ex', '_y', '_ey'].forEach(function(key){
+		// 	if(current[key] < 0 || current[key] > 1){
+		// 		current[key] = Math.min(Math.max(option[key],0), 1)
+		// 		current[map[key]] = Math.min(Math.max(option[map[key]],0), 1)
+		// 	}
+		// })
+
+		actions.forEach(function(key){
+			var v = current['_' + key];
+			option['_' + key] = v;
+		})
+		
+		_marker.style.left = (Math.min(option._ex, option._x) * 100).toFixed(5) + '%';
+		_marker.style.top = (Math.min(option._ey, option._y) * 100).toFixed(5) + '%';
+		_marker.style.width = (Math.abs(option._ex - option._x) * 100).toFixed(5) + '%';
+		_marker.style.height = (Math.abs(option._ey - option._y) * 100).toFixed(5) + '%';
+	};
+
+	marker.container.onmouseup = function(){
+		var option = marker.positionOptions;
+		if(option._ex < option._x){
+			var _x = option._x;
+			option._x = option._ex;
+			option._ex = _x;
+		}
+
+		if(option._ey < option._y){
+			var _y = option._y;
+			option._y = option._ey;
+			option._ey = _y;
+		}
+
+		(['x', 'y', 'ex', 'ey']).forEach(function(key){
+			option[key] = option['_' + key];
+		})
+
+		window.cachePosition = [option._x, option._ex, option._y, option._ey];
+
+		marker.positionOptions = null
+	}
+
+	setMarkerPosition();
+
+	function setMarkerPosition(){
+		var option = marker.option;
+		marker.instance.style.top = "10%";
+		marker.instance.style.left = "10%";
+		marker.instance.style.width = "10%";
+		marker.instance.style.height = "10%";
+	};
+
+};
+</script>
+</html>
