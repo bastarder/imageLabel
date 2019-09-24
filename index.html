@@ -5,6 +5,7 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<meta http-equiv="X-UA-Compatible" content="ie=edge">
 	<title>Document</title>
+	<script src="https://cdn.bootcss.com/html2canvas/0.5.0-beta4/html2canvas.min.js"></script>
 </head>
 <style>
 	.container{
@@ -71,12 +72,12 @@
 		left: 0;
 		width: 100%;
 		height: 100%;
-		background: rgba(0,0,0,0.5);
+		background: rgba(0,0,0,0);
 	}
 </style>
 <body>
 	<div class="container" onselectstart="return false;">
-		<img />
+		<img src="./fm.jpg" />
 		<div class="marker-container" >
 			<div class="marker">
 				<div class="dot dot-0"></div>
@@ -90,8 +91,33 @@
 			</div>
 		</div>
 	</div>
+	<button onclick="toCanvas()">canvas</button>
 </body>
 <script>
+function toCanvas(){
+	var canvas = document.createElement("canvas"); 
+	var context = canvas.getContext("2d");
+	var scale = 2; 
+
+	canvas.width = 600 * scale;
+	canvas.height = 300 * scale;
+					
+	canvas.getContext("2d").scale(scale, scale); 
+
+	html2canvas(document.querySelector(".container"), {
+		canvas: canvas,
+		scale: scale,
+		width: 600,
+		height: 300,
+	}).then(canvas => {
+    document.body.appendChild(canvas)
+// 		$('#down_button').attr('href', canvas.toDataURL());
+//     $('#down_button').attr('download', 'myjobdeer.png');
+//                 var html_canvas = canvas.toDataURL();
+		console.log(2)
+	});
+}
+
 
 window.onload = function(){
 	var _marker = document.querySelector('.marker');
